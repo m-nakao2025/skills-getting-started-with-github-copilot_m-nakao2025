@@ -26,8 +26,13 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsHTML = `
             <div class="participants-section">
               <strong>Participants:</strong>
-              <ul class="participants-list">
-                ${details.participants.map(email => `<li>${email}</li>`).join("")}
+              <ul id="participants-list-${name}" class="participants-list" style="list-style: none; padding: 0; margin: 0;">
+                ${details.participants.map(email => `
+                  <li class="participant-item">
+                    <span>${email}</span>
+                    <span class="delete-icon" title="Unregister" data-activity="${name}" data-email="${email}">🗑️</span>
+                  </li>
+                `).join("")}
               </ul>
             </div>
           `;
@@ -48,7 +53,40 @@ document.addEventListener("DOMContentLoaded", () => {
           ${participantsHTML}
         `;
 
+
         activitiesList.appendChild(activityCard);
+
+        // イベントデリゲーションで削除を処理する（リスナーを1つだけ追加）
+        // activitiesListに既にリスナーがついていない場合のみ追加
+        if (!activitiesList._deleteListenerAdded) {
+          activitiesList.addEventListener('click', async (e) => {
+            const icon = e.target.closest('.delete-icon');
+            if (!icon) return;
+            const activityName = icon.getAttribute('data-activity');
+            const email = icon.getAttribute('data-email');
+            if (!activityName || !email) return;
+            if (!confirm(`Unregister ${email} from ${activityName}?`)) return;
+            try {
+              const url = `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`;
+              console.log('Unregister URL:', url);
+              const response = await fetch(url, { method: 'DELETE' });
+              console.log('Unregister response:', response.status);
+              if (response.ok) {
+                // Optional: show success message
+                fetchActivities();
+              } else {
+                // Show server error details if exist
+                let msg = 'Failed to unregister participant.';
+                try { const json = await response.json(); msg = json.detail || json.message || msg } catch (_){ }
+                alert(msg);
+              }
+            } catch (err) {
+              console.error('Error while unregistering:', err);
+              alert('Error occurred while unregistering.');
+            }
+          });
+          activitiesList._deleteListenerAdded = true;
+        }
 
         // Add option to select dropdown
         const option = document.createElement("option");
@@ -83,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // 参加者登録後にリストを即時更新
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";

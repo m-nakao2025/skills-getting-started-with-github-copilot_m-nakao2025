@@ -1,3 +1,26 @@
+#participants-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.delete-icon {
+  cursor: pointer;
+  color: #d00;
+  margin-left: 8px;
+  font-size: 1.1em;
+  transition: color 0.2s;
+}
+.delete-icon:hover {
+  color: #a00;
+}
 * {
   box-sizing: border-box;
   margin: 0;
